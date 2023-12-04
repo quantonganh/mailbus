@@ -1,0 +1,6 @@
+.env
+.idea
+/mailbus
+/db
+/config.yaml
+/main
