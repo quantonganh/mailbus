@@ -9,8 +9,6 @@ import (
 	"github.com/rs/zerolog/hlog"
 )
 
-const errOops = "Oops! Something went wrong."
-
 type appHandler func(w http.ResponseWriter, r *http.Request) error
 
 // Error parse HTTP error and write to header and body

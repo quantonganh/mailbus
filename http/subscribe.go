@@ -109,5 +109,6 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 func writeJSONResponse(w http.ResponseWriter, statusCode int, response interface{}) {
 	w.Header().Set("ContentType", "application/json")
 	w.WriteHeader(statusCode)
+	//nolint:errcheck
 	json.NewEncoder(w).Encode(response)
 }

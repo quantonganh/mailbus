@@ -116,6 +116,7 @@ func TestConfirmHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	var subscriptionResp *mailbus.SubscriptionResponse
 	err = json.NewDecoder(resp.Body).Decode(&subscriptionResp)
+	require.NoError(t, err)
 	assert.Equal(t, thankyouMessage, subscriptionResp.Message)
 }
 
@@ -144,5 +145,6 @@ func TestUnsubscribeHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	var subscriptionResp *mailbus.SubscriptionResponse
 	err = json.NewDecoder(resp.Body).Decode(&subscriptionResp)
+	require.NoError(t, err)
 	assert.Equal(t, unsubscribeMessage, subscriptionResp.Message)
 }
