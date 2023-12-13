@@ -19,7 +19,7 @@ const (
 	alreadySubscribedMessage = "You had been subscribed to this blog already."
 )
 
-func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) error {
 	var (
 		req  *mailbus.SubscriptionRequest
 		resp = new(mailbus.SubscriptionResponse)

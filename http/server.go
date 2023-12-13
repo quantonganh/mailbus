@@ -66,8 +66,8 @@ func NewServer() (*Server, error) {
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
 	s.router.HandleFunc("/health", s.healthCheckHandler)
-	s.router.HandleFunc("/subscribe", s.Error(s.subscribeHandler)).Methods(http.MethodPost)
-	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
+	s.router.HandleFunc("/subscriptions", s.Error(s.subscriptionsHandler)).Methods(http.MethodPost)
+	subRouter := s.router.PathPrefix("/subscriptions").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
 

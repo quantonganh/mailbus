@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/quantonganh/blog"
 	"github.com/quantonganh/mailbus"
 	"github.com/quantonganh/mailbus/mock"
 	"github.com/quantonganh/mailbus/pkg/hash"
@@ -53,7 +52,7 @@ newsletter:
 	os.Exit(m.Run())
 }
 
-func TestSubscribeHandler(t *testing.T) {
+func TestSubscriptionsHandler(t *testing.T) {
 	t.Parallel()
 
 	email := "foo@gmail.com"
@@ -76,7 +75,7 @@ func TestSubscribeHandler(t *testing.T) {
 	}
 	data, err := json.Marshal(subscriptionReq)
 	assert.NoError(t, err)
-	req, err := http.NewRequest(http.MethodPost, "/subscribe", bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, "/subscriptions", bytes.NewReader(data))
 	assert.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -95,7 +94,7 @@ func TestConfirmHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	subscribe := mailbus.NewSubscription(email, token, blog.StatusPending)
+	subscribe := mailbus.NewSubscription(email, token, mailbus.StatusPending)
 	subscribeService := new(mock.SubscriptionService)
 	subscribeService.On("Subscribe", token).Return(nil)
 	subscribeService.On("FindByToken", token).Return(subscribe, nil)
@@ -106,7 +105,7 @@ func TestConfirmHandler(t *testing.T) {
 	s.SubscriptionService = subscribeService
 	s.NewsletterService = smtpService
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/subscribe/confirm?token=%s", token), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/subscriptions/confirm?token=%s", token), nil)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
