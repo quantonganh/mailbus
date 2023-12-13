@@ -15,6 +15,14 @@ import (
 	"github.com/quantonganh/mailbus/bolt"
 	"github.com/quantonganh/mailbus/gmail"
 	"github.com/quantonganh/mailbus/http"
+	"github.com/quantonganh/mailbus/sqlite"
+)
+
+type DatabaseType string
+
+const (
+	BoltDB   DatabaseType = "bolt"
+	SQLiteDB DatabaseType = "sqlite"
 )
 
 func main() {
@@ -66,20 +74,63 @@ func main() {
 
 type app struct {
 	config     *mailbus.Config
-	db         *bolt.DB
+	db         mailbus.Database
 	httpServer *http.Server
 }
 
 func newApp(config *mailbus.Config) *app {
+	db, subscriptionSvc, err := newDatabaseService(DatabaseType(config.DB.Type), config.DB.Path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	httpServer, err := http.NewServer()
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+	httpServer.SubscriptionService = subscriptionSvc
+
 	return &app{
 		config:     config,
-		db:         bolt.NewDB(config.DB.Path),
+		db:         db,
 		httpServer: httpServer,
 	}
+}
+
+func newDatabaseService(dbType DatabaseType, path string) (mailbus.Database, mailbus.SubscriptionService, error) {
+	var (
+		db              mailbus.Database
+		subscriptionSvc mailbus.SubscriptionService
+		err             error
+	)
+
+	if dbType == "" {
+		dbType = SQLiteDB
+	}
+
+	switch dbType {
+	case BoltDB:
+		db = bolt.NewDB(path)
+		boltDB, ok := db.(*bolt.DB)
+		if ok {
+			subscriptionSvc = bolt.NewSubscriptionService(boltDB)
+		} else {
+			err = fmt.Errorf("failed to create BoltDB")
+		}
+	case SQLiteDB:
+		db = sqlite.NewDB(path)
+		sqliteDB, ok := db.(*sqlite.DB)
+		if ok {
+			subscriptionSvc = sqlite.NewSubscriptionService(sqliteDB)
+		} else {
+			err = fmt.Errorf("failed to create SQLiteDB")
+		}
+	default:
+		err = fmt.Errorf("unsupported database type: %s", dbType)
+
+	}
+
+	return db, subscriptionSvc, err
 }
 
 func (a *app) Run(ctx context.Context) error {
@@ -93,7 +144,6 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	a.httpServer.SubscriptionService = bolt.NewSubscriptionService(a.db)
 	a.httpServer.NewsletterService = gmail.NewNewsletterService(a.config, a.httpServer.URL(), a.httpServer.SubscriptionService)
 
 	return nil

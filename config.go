@@ -3,6 +3,7 @@ package mailbus
 // Config represents the main config
 type Config struct {
 	DB struct {
+		Type string // "bolt", "sqlite", etc.
 		Path string
 	}
 
