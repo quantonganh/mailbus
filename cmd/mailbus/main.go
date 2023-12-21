@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -106,6 +107,10 @@ func newDatabaseService(dbType DatabaseType, path string) (mailbus.Database, mai
 
 	if dbType == "" {
 		dbType = SQLiteDB
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, nil, err
 	}
 
 	switch dbType {
