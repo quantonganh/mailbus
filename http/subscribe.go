@@ -1,11 +1,11 @@
 package http
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/asdine/storm/v3"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/hlog"
 
@@ -30,12 +30,12 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 	email := req.Email
 
 	token := s.NewsletterService.GenerateNewUUID()
-	newSubscription := mailbus.NewSubscription(email, token, mailbus.StatusPending)
+	newSubscription := mailbus.NewSubscription(email, token, mailbus.StatusPendingConfirmation)
 
 	logger := hlog.FromRequest(r)
 	subscribe, err := s.SubscriptionService.FindByEmail(email)
 	if err != nil {
-		if errors.Is(err, storm.ErrNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			logger.Info().Msg("Sending confirmation email")
 			if err := s.NewsletterService.SendConfirmationEmail(email, token); err != nil {
 				return err
@@ -55,10 +55,10 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 	} else {
 		logger.Info().Msgf("Found subscriber %+v in the database", subscribe)
 		switch subscribe.Status {
-		case mailbus.StatusPending:
+		case mailbus.StatusPendingConfirmation:
 			resp.Message = pendingMessage
 			writeJSONResponse(w, http.StatusOK, resp)
-		case mailbus.StatusSubscribed:
+		case mailbus.StatusActive:
 			resp.Message = alreadySubscribedMessage
 			writeJSONResponse(w, http.StatusBadRequest, resp)
 		default:
@@ -66,7 +66,7 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 				return err
 			}
 
-			logger.Info().Msgf("Updating status to %s", mailbus.StatusPending)
+			logger.Info().Msgf("Updating status to %s", mailbus.StatusPendingConfirmation)
 			if err := s.SubscriptionService.Update(email, token); err != nil {
 				return err
 			}
@@ -86,16 +86,12 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("token is not present")
 	}
 
-	if err := s.SubscriptionService.Subscribe(token); err != nil {
-		return err
-	}
-
-	subscribe, err := s.SubscriptionService.FindByToken(token)
+	email, err := s.SubscriptionService.Subscribe(token)
 	if err != nil {
 		return err
 	}
 
-	if err := s.NewsletterService.SendThankYouEmail(subscribe.Email); err != nil {
+	if err := s.NewsletterService.SendThankYouEmail(email); err != nil {
 		return err
 	}
 

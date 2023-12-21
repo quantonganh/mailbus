@@ -1,6 +1,7 @@
 CREATE TABLE subscriptions (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     email         TEXT NOT NULL UNIQUE,
+    status        TEXT NOT NULL,
     subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

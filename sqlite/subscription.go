@@ -24,28 +24,49 @@ func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscription,
 	err := ss.db.sqlDB.QueryRow("SELECT * FROM subscriptions WHERE email = ?", email).
 		Scan(&s.Email, &s.Token, &s.Status)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Subscription not found
-		}
-		return nil, fmt.Errorf("failed to find by email %s: %w", email, err)
+		return nil, err
 	}
 	return &s, nil
 }
 
 // Insert inserts new subscription into stormDB
 func (ss *subscriptionService) Insert(s *mailbus.Subscription) error {
-	_, err := ss.db.sqlDB.Exec("INSERT INTO subscriptions (email, token, status) VALUES (?, ?, ?)",
-		s.Email, s.Token, s.Status)
+	tx, err := ss.db.sqlDB.Begin()
 	if err != nil {
-		return fmt.Errorf("failed to insert: %w", err)
+		return fmt.Errorf("failed to start a transaction: %w", err)
 	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+			return
+		}
+		_ = tx.Commit()
+	}()
+
+	result, err := tx.Exec("INSERT INTO subscriptions (email, status) VALUES (?, ?)",
+		s.Email, s.Status)
+	if err != nil {
+		return fmt.Errorf("failed to insert into subscriptions table: %w", err)
+	}
+
+	lastInsertID, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert ID: %w", err)
+	}
+
+	_, err = tx.Exec("INSERT INTO subscription_tokens (subscription_token, subscriber_id) VALUES (?, ?)",
+		s.Token, lastInsertID)
+	if err != nil {
+		return fmt.Errorf("failed to insert into subscriptions table: %w", err)
+	}
+
 	return nil
 }
 
 // Update updates subscription status and new token
 func (ss *subscriptionService) Update(email, token string) error {
 	_, err := ss.db.sqlDB.Exec("UPDATE subscriptions SET status = ?, token = ? WHERE email = ?",
-		mailbus.StatusPending, token, email)
+		mailbus.StatusPendingConfirmation, token, email)
 	if err != nil {
 		return fmt.Errorf("failed to update: %w", err)
 	}
@@ -89,13 +110,29 @@ func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscripti
 }
 
 // Subscribe subscribes to newsletter
-func (ss *subscriptionService) Subscribe(token string) error {
-	_, err := ss.db.sqlDB.Exec("UPDATE subscriptions SET status = ? WHERE token = ?",
-		mailbus.StatusSubscribed, token)
-	if err != nil {
-		return fmt.Errorf("failed to update status: %w", err)
+func (ss *subscriptionService) Subscribe(token string) (string, error) {
+	row := ss.db.sqlDB.QueryRow(`
+		SELECT s.id, s.email
+		FROM subscription_tokens t
+		JOIN subscriptions s ON t.subscriber_id = s.id
+		WHERE t.subscription_token = ?`, token)
+	var (
+		subscriberID int64
+		email        string
+	)
+	if err := row.Scan(&subscriberID, &email); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("token not found")
+		} else {
+			return "", fmt.Errorf("failed to scan row: %w", err)
+		}
 	}
-	return nil
+
+	_, err := ss.db.sqlDB.Exec("UPDATE subscriptions SET status = ? WHERE id = ?", mailbus.StatusActive, subscriberID)
+	if err != nil {
+		return "", fmt.Errorf("failed to update status: %w", err)
+	}
+	return email, nil
 }
 
 // Unsubscribe unsubscribes from newsletter

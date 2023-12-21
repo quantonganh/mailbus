@@ -7,7 +7,7 @@ type SubscriptionService interface {
 	Update(email, token string) error
 	FindByToken(token string) (*Subscription, error)
 	FindByStatus(status string) ([]Subscription, error)
-	Subscribe(token string) error
+	Subscribe(token string) (string, error)
 	Unsubscribe(email string) error
 }
 
@@ -21,9 +21,9 @@ type Subscription struct {
 
 // Subscribe status
 const (
-	StatusPending      = "pending"
-	StatusSubscribed   = "subscribed"
-	StatusUnsubscribed = "unsubscribed"
+	StatusPendingConfirmation = "pending_confirmation"
+	StatusActive              = "active"
+	StatusUnsubscribed        = "unsubscribed"
 )
 
 // NewSubscription returns new subscriber

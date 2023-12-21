@@ -41,7 +41,7 @@ func (ss *subscriptionService) Update(email, token string) error {
 		return err
 	}
 
-	s.Status = mailbus.StatusPending
+	s.Status = mailbus.StatusPendingConfirmation
 	s.Token = token
 	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
@@ -71,18 +71,18 @@ func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscripti
 }
 
 // Subscribe subscribes to newsletter
-func (ss *subscriptionService) Subscribe(token string) error {
+func (ss *subscriptionService) Subscribe(token string) (string, error) {
 	s, err := ss.FindByToken(token)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	s.Status = mailbus.StatusSubscribed
+	s.Status = mailbus.StatusActive
 	if err := ss.db.stormDB.Save(s); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return s.Email, nil
 }
 
 // Unsubscribe unsubscribes from newsletter

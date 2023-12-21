@@ -103,7 +103,7 @@ func (ns *newsletterService) SendThankYouEmail(to string) error {
 func (ns *newsletterService) SendNewsletter(content string) {
 	_, err := ns.Cron.AddFunc(ns.Config.Newsletter.Cron.Spec, func() {
 
-		subscribers, err := ns.SubscriptionService.FindByStatus(mailbus.StatusSubscribed)
+		subscribers, err := ns.SubscriptionService.FindByStatus(mailbus.StatusActive)
 		if err != nil {
 			sentry.CaptureException(err)
 		}

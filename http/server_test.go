@@ -61,7 +61,7 @@ func TestSubscriptionsHandler(t *testing.T) {
 	subscribe := &mailbus.Subscription{}
 	subscribeService := new(mock.SubscriptionService)
 	subscribeService.On("FindByEmail", email).Return(subscribe, storm.ErrNotFound)
-	subscribeService.On("Insert", mailbus.NewSubscription(email, token, mailbus.StatusPending)).Return(nil)
+	subscribeService.On("Insert", mailbus.NewSubscription(email, token, mailbus.StatusPendingConfirmation)).Return(nil)
 
 	smtpService := new(mock.NewsletterService)
 	smtpService.On("SendConfirmationEmail", email, token).Return(nil)
@@ -94,7 +94,7 @@ func TestConfirmHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	subscribe := mailbus.NewSubscription(email, token, mailbus.StatusPending)
+	subscribe := mailbus.NewSubscription(email, token, mailbus.StatusPendingConfirmation)
 	subscribeService := new(mock.SubscriptionService)
 	subscribeService.On("Subscribe", token).Return(nil)
 	subscribeService.On("FindByToken", token).Return(subscribe, nil)
