@@ -25,6 +25,12 @@ jobs:
       with:
         version: v1.55
 
+    - name: Install AArch64 target toolchain
+      run: sudo apt-get update && sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+    - name: Build
+      run: CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ CGO_ENABLED=1 GOARCH=arm64 go build -o mailbus --tags "fts5" -v -ldflags="-s -w -linkmode 'external' -extldflags '-static'" cmd/mailbus/main.go
+
     - name: Set up QEMU
       if: github.event_name == 'push'
       uses: docker/setup-qemu-action@v1
