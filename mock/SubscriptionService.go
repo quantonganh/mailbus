@@ -105,17 +105,27 @@ func (_m *SubscriptionService) Insert(s *mailbus.Subscription) error {
 }
 
 // Subscribe provides a mock function with given fields: token
-func (_m *SubscriptionService) Subscribe(token string) error {
+func (_m *SubscriptionService) Subscribe(token string) (string, error) {
 	ret := _m.Called(token)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(token)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
 		r0 = rf(token)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Unsubscribe provides a mock function with given fields: email
