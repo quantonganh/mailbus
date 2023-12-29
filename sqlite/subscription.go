@@ -21,8 +21,8 @@ func NewSubscriptionService(db *DB) mailbus.SubscriptionService {
 // FindByEmail finds a subscription by email
 func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscription, error) {
 	var s mailbus.Subscription
-	err := ss.db.sqlDB.QueryRow("SELECT * FROM subscriptions WHERE email = ?", email).
-		Scan(&s.Email, &s.Token, &s.Status)
+	err := ss.db.sqlDB.QueryRow("SELECT email, status FROM subscriptions WHERE email = ?", email).
+		Scan(&s.Email, &s.Status)
 	if err != nil {
 		return nil, err
 	}
