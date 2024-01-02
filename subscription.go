@@ -39,7 +39,3 @@ type SubscriptionRequest struct {
 	Email string `json:"email"`
 	Token string `json:"token"`
 }
-
-type SubscriptionResponse struct {
-	Message string `json:"message"`
-}

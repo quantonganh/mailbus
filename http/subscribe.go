@@ -3,7 +3,6 @@ package http
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -12,18 +11,8 @@ import (
 	"github.com/quantonganh/mailbus"
 )
 
-const (
-	confirmationMessage      = "A confirmation email has been sent to %s. Click the link in the email to confirm and activate your subscription. Check your spam folder if you don't see it within a couple of minutes."
-	thankyouMessage          = "Thank you for subscribing to this blog."
-	pendingMessage           = "Your subscription status is pending. Please click the confirmation link in your email."
-	alreadySubscribedMessage = "You had been subscribed to this blog already."
-)
-
 func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) error {
-	var (
-		req  *mailbus.SubscriptionRequest
-		resp = new(mailbus.SubscriptionResponse)
-	)
+	var req *mailbus.SubscriptionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return err
 	}
@@ -46,21 +35,17 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 				return err
 			}
 
-			logger.Info().Msg("Rendering the response message")
-			resp.Message = fmt.Sprintf(confirmationMessage, newSubscription.Email)
-			writeJSONResponse(w, http.StatusOK, resp)
+			w.WriteHeader(http.StatusOK)
 		} else {
-			return NewError(err, http.StatusNotFound, fmt.Sprintf("Cannot found email: %s", email))
+			w.WriteHeader(http.StatusNotFound)
 		}
 	} else {
 		logger.Info().Msgf("Found subscriber %+v in the database", subscribe)
 		switch subscribe.Status {
 		case mailbus.StatusPendingConfirmation:
-			resp.Message = pendingMessage
-			writeJSONResponse(w, http.StatusOK, resp)
+			w.WriteHeader(http.StatusUnauthorized)
 		case mailbus.StatusActive:
-			resp.Message = alreadySubscribedMessage
-			writeJSONResponse(w, http.StatusBadRequest, resp)
+			w.WriteHeader(http.StatusConflict)
 		default:
 			if err := s.NewsletterService.SendConfirmationEmail(email, token); err != nil {
 				return err
@@ -71,9 +56,7 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 				return err
 			}
 
-			logger.Info().Msg("Rendering the response message")
-			resp.Message = fmt.Sprintf(confirmationMessage, email)
-			writeJSONResponse(w, http.StatusOK, resp)
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 
@@ -95,16 +78,7 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	writeJSONResponse(w, http.StatusOK, &mailbus.SubscriptionResponse{
-		Message: thankyouMessage,
-	})
+	w.WriteHeader(http.StatusOK)
 
 	return nil
-}
-
-func writeJSONResponse(w http.ResponseWriter, statusCode int, response interface{}) {
-	w.Header().Set("ContentType", "application/json")
-	w.WriteHeader(statusCode)
-	//nolint:errcheck
-	json.NewEncoder(w).Encode(response)
 }

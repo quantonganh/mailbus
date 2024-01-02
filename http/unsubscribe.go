@@ -6,16 +6,7 @@ import (
 	"github.com/quantonganh/mailbus/pkg/hash"
 )
 
-const (
-	unsubscribeMessage        = "Unsubscribed"
-	invalidUnsubscribeMessage = "Either email or hash is invalid."
-)
-
 func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error {
-	var response struct {
-		Message string `json:"message"`
-	}
-
 	query := r.URL.Query()
 	email := query.Get("email")
 	hashValue := query.Get("hash")
@@ -29,11 +20,9 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) erro
 			return err
 		}
 
-		response.Message = unsubscribeMessage
-		writeJSONResponse(w, http.StatusOK, response)
+		w.WriteHeader(http.StatusOK)
 	} else {
-		response.Message = invalidUnsubscribeMessage
-		writeJSONResponse(w, http.StatusBadRequest, response)
+		w.WriteHeader(http.StatusBadRequest)
 	}
 
 	return nil
