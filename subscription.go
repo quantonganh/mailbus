@@ -36,6 +36,6 @@ func NewSubscription(email, token, status string) *Subscription {
 }
 
 type SubscriptionRequest struct {
+	URL   string `json:"url"`
 	Email string `json:"email"`
-	Token string `json:"token"`
 }

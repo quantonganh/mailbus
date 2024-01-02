@@ -37,13 +37,13 @@ func (_m *NewsletterService) GetHMACSecret() string {
 	return r0
 }
 
-// SendConfirmationEmail provides a mock function with given fields: to, token
-func (_m *NewsletterService) SendConfirmationEmail(to string, token string) error {
-	ret := _m.Called(to, token)
+// SendConfirmationEmail provides a mock function with given fields: to, url, token
+func (_m *NewsletterService) SendConfirmationEmail(to string, url string, token string) error {
+	ret := _m.Called(to, url, token)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(to, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(to, url, token)
 	} else {
 		r0 = ret.Error(0)
 	}

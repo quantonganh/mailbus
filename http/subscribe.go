@@ -26,7 +26,7 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Info().Msg("Sending confirmation email")
-			if err := s.NewsletterService.SendConfirmationEmail(email, token); err != nil {
+			if err := s.NewsletterService.SendConfirmationEmail(email, req.URL, token); err != nil {
 				return err
 			}
 
@@ -47,7 +47,7 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 		case mailbus.StatusActive:
 			w.WriteHeader(http.StatusConflict)
 		default:
-			if err := s.NewsletterService.SendConfirmationEmail(email, token); err != nil {
+			if err := s.NewsletterService.SendConfirmationEmail(email, req.URL, token); err != nil {
 				return err
 			}
 

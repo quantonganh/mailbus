@@ -33,7 +33,7 @@ func NewNewsletterService(config *mailbus.Config, serverURL string, subscription
 }
 
 // SendConfirmationEmail sends a confirmation email
-func (ns *newsletterService) SendConfirmationEmail(to, token string) error {
+func (ns *newsletterService) SendConfirmationEmail(to, url, token string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
 			Name: ns.Config.Newsletter.Product.Name,
@@ -53,7 +53,7 @@ func (ns *newsletterService) SendConfirmationEmail(to, token string) error {
 					Button: hermes.Button{
 						Color: "#22BC66",
 						Text:  "Confirm your subscription",
-						Link:  fmt.Sprintf("%s/subscribe/confirm?token=%s", ns.ServerURL, token),
+						Link:  fmt.Sprintf("%s/subscribe/confirm?token=%s", url, token),
 					},
 				},
 			},
