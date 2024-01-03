@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 
+	"github.com/quantonganh/httperror"
 	"github.com/quantonganh/mailbus"
 )
 
@@ -58,7 +59,7 @@ func NewServer() (*Server, error) {
 	}))
 	s.router.Use(hlog.UserAgentHandler("user_agent"))
 	s.router.Use(hlog.RefererHandler("referer"))
-	s.router.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
+	s.router.Use(httperror.RequestIDHandler("req_id"))
 
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 	s.router.Use(sentryHandler.Handle)
