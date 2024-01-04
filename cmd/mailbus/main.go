@@ -149,19 +149,13 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	a.httpServer.NewsletterService = gmail.NewNewsletterService(a.config, a.httpServer.URL(), a.httpServer.SubscriptionService)
+	a.httpServer.NewsletterService = gmail.NewNewsletterService(a.config, a.httpServer.URL())
 
 	return nil
 }
 
 func (a *app) Close() error {
 	if a.httpServer != nil {
-		if a.httpServer.NewsletterService != nil {
-			if err := a.httpServer.NewsletterService.Stop(); err != nil {
-				return err
-			}
-		}
-
 		if err := a.httpServer.Close(); err != nil {
 			return err
 		}

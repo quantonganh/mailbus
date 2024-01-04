@@ -19,7 +19,7 @@ func (s *Server) subscriptionsHandler(w http.ResponseWriter, r *http.Request) er
 	email := req.Email
 
 	token := s.NewsletterService.GenerateNewUUID()
-	newSubscription := mailbus.NewSubscription(email, token, mailbus.StatusPendingConfirmation)
+	newSubscription := mailbus.NewSubscription(email, mailbus.StatusPendingConfirmation, token)
 
 	logger := hlog.FromRequest(r)
 	subscribe, err := s.SubscriptionService.FindByEmail(email)

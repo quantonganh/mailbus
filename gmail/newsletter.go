@@ -2,13 +2,10 @@ package gmail
 
 import (
 	"fmt"
-	"log"
-	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/matcornic/hermes/v2"
 	"github.com/pkg/errors"
-	"github.com/robfig/cron/v3"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/gomail.v2"
 
@@ -18,17 +15,13 @@ import (
 type newsletterService struct {
 	ServerURL string
 	*mailbus.Config
-	mailbus.SubscriptionService
-	*cron.Cron
 }
 
 // NewNewsletterService returns new newsletter service
-func NewNewsletterService(config *mailbus.Config, serverURL string, subscriptionService mailbus.SubscriptionService) mailbus.NewsletterService {
+func NewNewsletterService(config *mailbus.Config, serverURL string) mailbus.NewsletterService {
 	return &newsletterService{
-		Config:              config,
-		ServerURL:           serverURL,
-		SubscriptionService: subscriptionService,
-		Cron:                cron.New(cron.WithLogger(cron.DefaultLogger)),
+		Config:    config,
+		ServerURL: serverURL,
 	}
 }
 
@@ -100,37 +93,11 @@ func (ns *newsletterService) SendThankYouEmail(to string) error {
 }
 
 // SendNewsletter sends newsletter
-func (ns *newsletterService) SendNewsletter(content string) {
-	_, err := ns.Cron.AddFunc(ns.Config.Newsletter.Cron.Spec, func() {
-
-		subscribers, err := ns.SubscriptionService.FindByStatus(mailbus.StatusActive)
-		if err != nil {
+func (ns *newsletterService) SendNewsletter(subscribers []mailbus.Subscriber, subject, body string) {
+	for _, s := range subscribers {
+		if err := ns.sendEmail(s.Email, subject, body); err != nil {
 			sentry.CaptureException(err)
 		}
-
-		for _, s := range subscribers {
-			if err := ns.sendEmail(s.Email, fmt.Sprintf("%s newsletter", ns.Config.Newsletter.Product.Name), content); err != nil {
-				sentry.CaptureException(err)
-			}
-		}
-	})
-	if err != nil {
-		sentry.CaptureException(err)
-	}
-
-	ns.Cron.Start()
-}
-
-// Stop stops newsletter service
-func (ns *newsletterService) Stop() error {
-	ctx := ns.Cron.Stop()
-	log.Println("Shutting down cron...")
-	select {
-	case <-time.After(10 * time.Second):
-		return errors.New("cron forced to shutdown")
-	case <-ctx.Done():
-		log.Println("Cron exiting...")
-		return ctx.Err()
 	}
 }
 

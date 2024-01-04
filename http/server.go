@@ -71,6 +71,7 @@ func NewServer() (*Server, error) {
 	subRouter := s.router.PathPrefix("/subscriptions").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
+	s.router.HandleFunc("/newsletter/send", s.Error(s.sendNewsletterHandler))
 
 	return s, nil
 }

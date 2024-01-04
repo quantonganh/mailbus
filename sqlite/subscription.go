@@ -19,8 +19,8 @@ func NewSubscriptionService(db *DB) mailbus.SubscriptionService {
 }
 
 // FindByEmail finds a subscription by email
-func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscription, error) {
-	var s mailbus.Subscription
+func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscriber, error) {
+	var s mailbus.Subscriber
 	err := ss.db.sqlDB.QueryRow("SELECT email, status FROM subscriptions WHERE email = ?", email).
 		Scan(&s.Email, &s.Status)
 	if err != nil {
@@ -73,23 +73,11 @@ func (ss *subscriptionService) Update(email, token string) error {
 	return nil
 }
 
-// FindByToken finds subscription by token
-func (ss *subscriptionService) FindByToken(token string) (*mailbus.Subscription, error) {
-	var s mailbus.Subscription
-	err := ss.db.sqlDB.QueryRow("SELECT * FROM subscriptions WHERE token = ?", token).
-		Scan(&s.Email, &s.Token, &s.Status)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Subscription not found
-		}
-		return nil, fmt.Errorf("failed to find by token: %w", err)
-	}
-	return &s, nil
-}
-
 // FindByStatus finds subscription by status
-func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscription, error) {
-	var subscriptions []mailbus.Subscription
+func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscriber, error) {
+	const op = "subscriptionService.FindByStatus"
+
+	var subscribers []mailbus.Subscriber
 	rows, err := ss.db.sqlDB.Query("SELECT * FROM subscriptions WHERE status = ?", status)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find by status: %w", err)
@@ -98,15 +86,19 @@ func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscripti
 
 	// Iterate over the rows and populate the subscriptions slice
 	for rows.Next() {
-		var s mailbus.Subscription
-		err := rows.Scan(&s.Email, &s.Token, &s.Status)
+		var s mailbus.Subscriber
+		err := rows.Scan(&s.ID, &s.Email, &s.Status, &s.SubscribedAt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			return nil, &mailbus.Error{
+				Code: mailbus.ErrInternal,
+				Op:   op,
+				Err:  err,
+			}
 		}
-		subscriptions = append(subscriptions, s)
+		subscribers = append(subscribers, s)
 	}
 
-	return subscriptions, nil
+	return subscribers, nil
 }
 
 // Subscribe subscribes to newsletter

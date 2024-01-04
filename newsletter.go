@@ -4,8 +4,12 @@ package mailbus
 type NewsletterService interface {
 	SendConfirmationEmail(to, url, token string) error
 	SendThankYouEmail(to string) error
-	SendNewsletter(content string)
+	SendNewsletter(subscribers []Subscriber, subject, body string)
 	GenerateNewUUID() string
 	GetHMACSecret() string
-	Stop() error
+}
+
+type EmailNewsletterRequest struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
 }

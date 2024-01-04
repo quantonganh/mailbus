@@ -37,19 +37,19 @@ func (_m *SubscriptionService) Confirm(token string) (string, error) {
 }
 
 // FindByEmail provides a mock function with given fields: email
-func (_m *SubscriptionService) FindByEmail(email string) (*mailbus.Subscription, error) {
+func (_m *SubscriptionService) FindByEmail(email string) (*mailbus.Subscriber, error) {
 	ret := _m.Called(email)
 
-	var r0 *mailbus.Subscription
+	var r0 *mailbus.Subscriber
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*mailbus.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*mailbus.Subscriber, error)); ok {
 		return rf(email)
 	}
-	if rf, ok := ret.Get(0).(func(string) *mailbus.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(string) *mailbus.Subscriber); ok {
 		r0 = rf(email)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*mailbus.Subscription)
+			r0 = ret.Get(0).(*mailbus.Subscriber)
 		}
 	}
 
@@ -63,50 +63,24 @@ func (_m *SubscriptionService) FindByEmail(email string) (*mailbus.Subscription,
 }
 
 // FindByStatus provides a mock function with given fields: status
-func (_m *SubscriptionService) FindByStatus(status string) ([]mailbus.Subscription, error) {
+func (_m *SubscriptionService) FindByStatus(status string) ([]mailbus.Subscriber, error) {
 	ret := _m.Called(status)
 
-	var r0 []mailbus.Subscription
+	var r0 []mailbus.Subscriber
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) ([]mailbus.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) ([]mailbus.Subscriber, error)); ok {
 		return rf(status)
 	}
-	if rf, ok := ret.Get(0).(func(string) []mailbus.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(string) []mailbus.Subscriber); ok {
 		r0 = rf(status)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]mailbus.Subscription)
+			r0 = ret.Get(0).([]mailbus.Subscriber)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(status)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// FindByToken provides a mock function with given fields: token
-func (_m *SubscriptionService) FindByToken(token string) (*mailbus.Subscription, error) {
-	ret := _m.Called(token)
-
-	var r0 *mailbus.Subscription
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*mailbus.Subscription, error)); ok {
-		return rf(token)
-	}
-	if rf, ok := ret.Get(0).(func(string) *mailbus.Subscription); ok {
-		r0 = rf(token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*mailbus.Subscription)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(token)
 	} else {
 		r1 = ret.Error(1)
 	}

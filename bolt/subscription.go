@@ -16,8 +16,8 @@ func NewSubscriptionService(db *DB) mailbus.SubscriptionService {
 }
 
 // FindByEmail finds a subscription by email
-func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscription, error) {
-	var s mailbus.Subscription
+func (ss *subscriptionService) FindByEmail(email string) (*mailbus.Subscriber, error) {
+	var s mailbus.Subscriber
 	if err := ss.db.stormDB.One("Email", email, &s); err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (ss *subscriptionService) Update(email, token string) error {
 	}
 
 	s.Status = mailbus.StatusPendingConfirmation
-	s.Token = token
+	// s.Token = token
 	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
 	}
@@ -51,8 +51,8 @@ func (ss *subscriptionService) Update(email, token string) error {
 }
 
 // FindByToken finds subscription by token
-func (ss *subscriptionService) FindByToken(token string) (*mailbus.Subscription, error) {
-	var s mailbus.Subscription
+func (ss *subscriptionService) FindByToken(token string) (*mailbus.Subscriber, error) {
+	var s mailbus.Subscriber
 	if err := ss.db.stormDB.One("Token", token, &s); err != nil {
 		return nil, errors.Errorf("failed to find by token: %v", err)
 	}
@@ -61,8 +61,8 @@ func (ss *subscriptionService) FindByToken(token string) (*mailbus.Subscription,
 }
 
 // FindByStatus finds subscription by status
-func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscription, error) {
-	var subscribes []mailbus.Subscription
+func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscriber, error) {
+	var subscribes []mailbus.Subscriber
 	if err := ss.db.stormDB.Find("Status", status, &subscribes); err != nil {
 		return nil, errors.Errorf("failed to find by status: %v", err)
 	}

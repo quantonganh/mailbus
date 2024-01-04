@@ -58,7 +58,7 @@ func TestSubscriptionsHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	subscribe := &mailbus.Subscription{}
+	subscribe := &mailbus.Subscriber{}
 	subscribeService := new(mock.SubscriptionService)
 	subscribeService.On("FindByEmail", email).Return(subscribe, storm.ErrNotFound)
 	subscribeService.On("Insert", mailbus.NewSubscription(email, token, mailbus.StatusPendingConfirmation)).Return(nil)
