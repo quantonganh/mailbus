@@ -46,7 +46,7 @@ func (ns *newsletterService) SendConfirmationEmail(to, url, token string) error 
 					Button: hermes.Button{
 						Color: "#22BC66",
 						Text:  "Confirm your subscription",
-						Link:  fmt.Sprintf("%s/subscribe/confirm?token=%s", url, token),
+						Link:  fmt.Sprintf("%s/subscriptions/confirm?token=%s", url, token),
 					},
 				},
 			},
