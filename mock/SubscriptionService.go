@@ -12,6 +12,30 @@ type SubscriptionService struct {
 	mock.Mock
 }
 
+// Confirm provides a mock function with given fields: token
+func (_m *SubscriptionService) Confirm(token string) (string, error) {
+	ret := _m.Called(token)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(token)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindByEmail provides a mock function with given fields: email
 func (_m *SubscriptionService) FindByEmail(email string) (*mailbus.Subscription, error) {
 	ret := _m.Called(email)
@@ -102,30 +126,6 @@ func (_m *SubscriptionService) Insert(s *mailbus.Subscription) error {
 	}
 
 	return r0
-}
-
-// Subscribe provides a mock function with given fields: token
-func (_m *SubscriptionService) Subscribe(token string) (string, error) {
-	ret := _m.Called(token)
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
-		return rf(token)
-	}
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(token)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // Unsubscribe provides a mock function with given fields: email

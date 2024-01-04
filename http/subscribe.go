@@ -69,8 +69,10 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("token is not present")
 	}
 
-	email, err := s.SubscriptionService.Subscribe(token)
-	if err != nil {
+	email, err := s.SubscriptionService.Confirm(token)
+	if mailbus.ErrorCode(err) == mailbus.ErrNotFound {
+		return NewError(err, http.StatusNotFound, "Token not found.")
+	} else if err != nil {
 		return err
 	}
 

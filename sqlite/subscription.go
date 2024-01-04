@@ -110,7 +110,9 @@ func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscripti
 }
 
 // Subscribe subscribes to newsletter
-func (ss *subscriptionService) Subscribe(token string) (string, error) {
+func (ss *subscriptionService) Confirm(token string) (string, error) {
+	const op = "subscriptionService.Confirm"
+
 	row := ss.db.sqlDB.QueryRow(`
 		SELECT s.id, s.email
 		FROM subscription_tokens t
@@ -122,9 +124,15 @@ func (ss *subscriptionService) Subscribe(token string) (string, error) {
 	)
 	if err := row.Scan(&subscriberID, &email); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("token not found")
+			return "", &mailbus.Error{
+				Code: mailbus.ErrNotFound,
+			}
 		} else {
-			return "", fmt.Errorf("failed to scan row: %w", err)
+			return "", &mailbus.Error{
+				Code: mailbus.ErrInternal,
+				Op:   op,
+				Err:  err,
+			}
 		}
 	}
 

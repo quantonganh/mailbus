@@ -7,7 +7,7 @@ type SubscriptionService interface {
 	Update(email, token string) error
 	FindByToken(token string) (*Subscription, error)
 	FindByStatus(status string) ([]Subscription, error)
-	Subscribe(token string) (string, error)
+	Confirm(token string) (string, error)
 	Unsubscribe(email string) error
 }
 

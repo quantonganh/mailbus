@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/quantonganh/mailbus"
 	"github.com/rs/zerolog/hlog"
 )
 
@@ -25,6 +26,10 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 		clientError, ok := err.(ClientError)
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
+			body := map[string]interface{}{
+				"error": mailbus.ErrInternal,
+			}
+			_ = json.NewEncoder(w).Encode(body)
 			return
 		}
 

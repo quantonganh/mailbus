@@ -71,7 +71,7 @@ func (ss *subscriptionService) FindByStatus(status string) ([]mailbus.Subscripti
 }
 
 // Subscribe subscribes to newsletter
-func (ss *subscriptionService) Subscribe(token string) (string, error) {
+func (ss *subscriptionService) Confirm(token string) (string, error) {
 	s, err := ss.FindByToken(token)
 	if err != nil {
 		return "", err
