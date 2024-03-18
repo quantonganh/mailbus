@@ -16,6 +16,7 @@ import (
 	"github.com/quantonganh/mailbus/bolt"
 	"github.com/quantonganh/mailbus/gmail"
 	"github.com/quantonganh/mailbus/http"
+	"github.com/quantonganh/mailbus/rabbitmq"
 	"github.com/quantonganh/mailbus/sqlite"
 )
 
@@ -49,7 +50,11 @@ func main() {
 	}
 	defer sentry.Flush(2 * time.Second)
 
-	a := newApp(config)
+	a, err := newApp(config)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
@@ -79,7 +84,7 @@ type app struct {
 	httpServer *http.Server
 }
 
-func newApp(config *mailbus.Config) *app {
+func newApp(config *mailbus.Config) (*app, error) {
 	db, subscriptionSvc, err := newDatabaseService(DatabaseType(config.DB.Type), config.DB.Path)
 	if err != nil {
 		log.Fatal(err)
@@ -87,15 +92,21 @@ func newApp(config *mailbus.Config) *app {
 
 	httpServer, err := http.NewServer()
 	if err != nil {
-		log.Fatalf("%+v\n", err)
+		return nil, err
 	}
 	httpServer.SubscriptionService = subscriptionSvc
+
+	mqService, err := rabbitmq.NewQueueService(config.AMQP.URL)
+	if err != nil {
+		return nil, err
+	}
+	httpServer.QueueService = mqService
 
 	return &app{
 		config:     config,
 		db:         db,
 		httpServer: httpServer,
-	}
+	}, nil
 }
 
 func newDatabaseService(dbType DatabaseType, path string) (mailbus.Database, mailbus.SubscriptionService, error) {
@@ -151,7 +162,39 @@ func (a *app) Run(ctx context.Context) error {
 
 	a.httpServer.NewsletterService = gmail.NewNewsletterService(a.config, a.httpServer.URL())
 
-	return nil
+	nextSaturday := getNextSaturday(time.Now())
+	durationUntilNextSaturday := time.Until(nextSaturday)
+
+	for {
+		select {
+		case <-time.After(durationUntilNextSaturday):
+			ticker := time.NewTicker(7 * 24 * time.Hour)
+			defer ticker.Stop()
+
+			tick := ticker.C
+
+			for {
+				select {
+				case <-tick:
+					if err := a.httpServer.ConsumeAndSendNewsletter(ctx); err != nil {
+						return err
+					}
+				case <-ctx.Done():
+					return nil
+				}
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func getNextSaturday(now time.Time) time.Time {
+	if now.Weekday() != time.Saturday {
+		now = now.Add(24 * time.Hour)
+	}
+
+	return time.Date(now.Year(), now.Month(), now.Day(), 7, 0, 0, 0, now.Location())
 }
 
 func (a *app) Close() error {

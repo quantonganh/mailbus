@@ -1,7 +1,9 @@
 package http
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -34,6 +36,7 @@ type Server struct {
 
 	SubscriptionService mailbus.SubscriptionService
 	NewsletterService   mailbus.NewsletterService
+	QueueService        mailbus.QueueService
 }
 
 // NewServer create new HTTP server
@@ -71,7 +74,6 @@ func NewServer() (*Server, error) {
 	subRouter := s.router.PathPrefix("/subscriptions").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
-	s.router.HandleFunc("/newsletter/send", s.Error(s.sendNewsletterHandler))
 
 	return s, nil
 }
@@ -126,6 +128,29 @@ func (s *Server) Open() (err error) {
 	go func() {
 		_ = s.server.Serve(s.ln)
 	}()
+
+	return nil
+}
+
+func (s *Server) ConsumeAndSendNewsletter(ctx context.Context) error {
+	messages, err := s.QueueService.Consume(ctx, "added-posts")
+	if err != nil {
+		return err
+	}
+
+	activeSubscribers, err := s.SubscriptionService.FindByStatus(mailbus.StatusActive)
+	if err != nil {
+		return err
+	}
+
+	for msg := range messages {
+		var req *mailbus.EmailNewsletterRequest
+		if err := json.NewDecoder(bytes.NewReader(msg)).Decode(&req); err != nil {
+			return err
+		}
+
+		s.NewsletterService.SendNewsletter(activeSubscribers, req.Subject, req.Body)
+	}
 
 	return nil
 }
